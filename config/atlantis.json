@@ -1,0 +1,8 @@
+{
+    "source_ami": "ami-04681a1dbd79675a5",
+    "builder_server_region": "us-east-1",
+    "ami_region": "us-east-1",
+    "terraform_version": "0.11.8",
+    "atlantis_version": "0.3.11",
+    "atlantis_server_port": "4141"
+}

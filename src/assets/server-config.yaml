@@ -1,0 +1,6 @@
+---
+atlantis-url: __ATLANTIS_URL__
+repo-whitelist: __ATLANTIS_REPO_WHITELIST__
+port: __ATLANTIS_SERVER_PORT__
+data-dir: /opt/atlantis/data
+log-level: info

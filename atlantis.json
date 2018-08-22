@@ -1,0 +1,54 @@
+{
+    "description": "AMI for running Atlantis Terraform automation tool",
+    "min_packer_version": "1.2.4",
+    "variables": {
+        "terraform_version": null,
+        "atlantis_version": null,
+        "atlantis_server_port": null,
+        "source_ami": null,
+        "builder_server_region": null,
+        "ami_region": null
+    },
+    "builders": [{
+        "ami_description": "Run Atlantis Terraform automation tool in EC2",
+        "ami_name": "atlantis-{{user `atlantis_version`}}--{{timestamp}}",
+        "type": "amazon-ebs",
+        "region": "{{user `builder_server_region`}}",
+        "source_ami": "{{user `source_ami`}}",
+        "instance_type": "t2.small",
+        "communicator": "ssh",
+        "ssh_username": "ec2-user",
+        "ssh_file_transfer_method": "scp",
+        "ami_regions": ["{{user `ami_region`}}"]
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "sudo yum update -y",
+                "mkdir /tmp/assets"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "src/assets",
+            "destination": "/tmp/assets/atlantis"
+        },
+        {
+            "type": "shell",
+            "scripts": [
+                "src/terraform.sh",
+                "src/atlantis.sh"
+            ],
+            "environment_vars": [
+                "terraform_version={{user `terraform_version`}}",
+                "atlantis_version={{user `atlantis_version`}}",
+                "atlantis_server_port={{user `atlantis_server_port`}}"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": ["sudo rm -rf /tmp/assets"]
+        }
+    ]
+}
