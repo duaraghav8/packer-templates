@@ -1,43 +1,31 @@
-# packer-atlantis
-A Packer template for [Atlantis](https://www.runatlantis.io/) - the Terraform workflow automation tool.
+# packer-templates
+This repository contains some useful, yet minimal [Packer](https://www.packer.io/) templates. They most likeley need to be extended by the user based on specific infrastructure requirements. The idea is to provide templates that solve common installation and setup problems for a large number of use cases.
 
-## OS and Architecture
-This template has been tested on Amazon Linux 1 & 2. However, it is compatible with all 64-bit RedHat-based Linux systems.
-
-## Template configuration
-1. [config/atlantis.json](config/atlantis.json) - Contains sane defaults required during AMI creation.
-
-Any configuration not provided by this template must be provided by you during validation or build time, depending on your requirements. For example, if running Packer locally, you will need to provide AWS access key ID and secret.
-
-Build the AMI using Packer
-
+## Project Structure
 ```
-packer build -var-file=config/atlantis.json atlantis.json
+.
+├── LICENSE
+├── README.md
+│
+├── <template-1>                          # Root directory of the template
+│   ├── README.md                         # Documentation of the template
+│   ├── <template-1>.json                 # Main template file supplied to "packer build"
+│   ├── config                            # Directory containing configurations for the template required at build time
+│   │   └── <template-1>.json
+│   │   └── ...
+│   └── src                               # Installation and setup instructions to be executed
+│       ├── assets                        # Assets that need to be placed on the machine, like configuration files or init scripts
+│       │   └── docker-config.json
+│       │   └── ...
+│       ├── <template-1>.sh               # Entrypoint script for the current template
+│       └── ...
+│
+├── <template-2>
+│   └── ...
+└── ...
 ```
 
-By default, the template creates both the builder and the AMI in `us-east-1` (N. Virginia).
+## Platform Compatibility
+All templates are built using the [Amazon EBS builder](https://www.packer.io/docs/builders/amazon-ebs.html) and are designed to work with 64-bit Amazon Linux and RHEL systems, unless stated otherwise. Making them compatible with other Operating systems or cloud providers would most likely require the user to make changes specific to their use case.
 
-## Running Atlantis
-This template only creates a base AMI with the required dependencies installed. It is recommended that you extend it to include an [Upstart](http://upstart.ubuntu.com/cookbook/) or [systemd](https://www.freedesktop.org/wiki/Software/systemd/) configuration which is responsible for fetching necessary runtime information and launching `atlantis` with it.
-
-`atlantis` itself resides under `/usr/bin`. Its assets reside under `/opt/atlantis`:
-
-1. `/opt/atlantis/config.yaml` - Contains minimal configuration for Atlantis server. Some values need to be set by the user before running atlantis, either at AMI creation time or at runtime. Besides the configuration present in `config.yaml`, you will also need to supply the user and token information of the version control platform you're using at the very least.
-2. `/opt/atlantis/data` - Directory for atlantis to store its data. This AMI does not handle backing up of this directory. It must be handled by the user.
-
-Atlantis must be run using `atlantis server --config /opt/atlantis/config.yaml`.
-
-## Recommendations
-
-### SSL
-For obvious reasons, all communication with atlantis must take place over HTTPS. Atlantis allows you to provide SSL certificate for your domain. It is highly recommended that you either provide the certificate and key directly to Atlantis server or run it behind a load balancer that manages SSL for you.
-
-### Assume an IAM role to "terraform apply"
-An EC2 machine that uses Terraform to manage your infrastructure requires a large set of extremely sensitive permissions. A common practice is to assign these permissions to the default IAM role of the machine. The problem with this approach is that if anyone logged into the machine accidently makes any sort of request to AWS, it will most likely go through. The consequences of this are left up to the reader's imagination.
-
-Instead, the recommended way for servers requiring such sensitive permissions is for them to [Assume another IAM role](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) temporarily, perform the required tasks, then give up the role. This other role the server temporarily takes on contains all the sensitive permissions Terraform requires.
-
-### Fetch secrets at runtime
-Secrets such as Github token or webhook secret must not be hard-coded or present at AMI creation time. This compromises security and also hinders our ability to rotate them. Instead, they should be fetched at runtime prior to launching atlantis server from a secret storage engine such as AWS Secrets Manager or Vault.
-
-See Atlantis [Installation guide](https://www.runatlantis.io/docs/deployment.html).
+Note that some configuration parameters have intentionally been omitted from all templates. These should be provided at validation or build time by the user. For example, if Packer is running locally, it must be provided credentials for the builder(s) if required.
