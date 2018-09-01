@@ -1,0 +1,54 @@
+{
+    "description": "AMI for Docker with AWS ECR integration",
+    "min_packer_version": "1.2.4",
+    "variables": {
+        "docker_version": null,
+        "source_ami": null,
+        "builder_server_region": null,
+        "ami_region": null
+    },
+    "builders": [{
+        "ami_description": "AMI for Docker with AWS ECR integration",
+        "ami_name": "docker-{{user `docker_version`}}-ecr--{{timestamp}}",
+        "type": "amazon-ebs",
+        "region": "{{user `builder_server_region`}}",
+        "source_ami": "{{user `source_ami`}}",
+        "instance_type": "t2.small",
+        "communicator": "ssh",
+        "ssh_username": "ec2-user",
+        "ssh_file_transfer_method": "scp",
+        "ami_regions": ["{{user `ami_region`}}"],
+        "tags": {
+            "Name": "docker-ecr",
+            "Base AMI": "{{ .SourceAMIName }}"
+        }
+    }],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir /tmp/assets"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "src/assets",
+            "destination": "/tmp/assets/docker-ecr"
+        },
+        {
+            "type": "shell",
+            "scripts": [
+                "src/docker-ecr.sh"
+            ],
+            "environment_vars": [
+                "docker_version={{user `docker_version`}}"
+            ]
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "sudo rm -rf /tmp/assets"
+            ]
+        }
+    ]
+}

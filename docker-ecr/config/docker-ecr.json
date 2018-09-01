@@ -1,0 +1,6 @@
+{
+    "source_ami": "ami-04681a1dbd79675a5",
+    "builder_server_region": "us-east-1",
+    "ami_region": "us-east-1",
+    "docker_version": "18.03.1ce-5.amzn2"
+}
